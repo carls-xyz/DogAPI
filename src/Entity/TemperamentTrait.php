@@ -7,23 +7,36 @@ use App\Repository\TemperamentTraitRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: TemperamentTraitRepository::class)]
-#[ApiResource]
+#[ORM\UniqueConstraint(name: 'uniq_temperament_trait_name', columns: ['name'])]
+#[UniqueEntity('name')]
+#[ApiResource(
+    normalizationContext: ['groups' => ['trait:read']],
+    denormalizationContext: ['groups' => ['trait:write']],
+)]
 class TemperamentTrait
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['trait:read', 'breed:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 100)]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 100)]
+    #[Groups(['trait:read', 'trait:write', 'breed:read'])]
     private ?string $name = null;
 
     /**
      * @var Collection<int, Breed>
      */
     #[ORM\ManyToMany(targetEntity: Breed::class, mappedBy: 'traits')]
+    #[Groups(['trait:read'])]
     private Collection $breeds;
 
     public function __construct()
