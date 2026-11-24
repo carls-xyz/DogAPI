@@ -8,48 +8,79 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: BreedRepository::class)]
-#[ApiResource]
+#[ORM\UniqueConstraint(name: 'uniq_breed_dog_api_id', columns: ['dog_api_id'])]
+#[UniqueEntity('dogApiId')]
+#[ApiResource(
+    normalizationContext: ['groups' => ['breed:read']],
+    denormalizationContext: ['groups' => ['breed:write']],
+)]
 class Breed
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['breed:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 255)]
+    #[Groups(['breed:read', 'breed:write'])]
     private ?string $name = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Assert\Length(min: 1)]
+    #[Groups(['breed:read', 'breed:write'])]
     private ?string $description = null;
 
     #[ORM\Column(nullable: true)]
+    #[Assert\Positive]
+    #[Groups(['breed:read', 'breed:write'])]
     private ?int $lifeMin = null;
 
     #[ORM\Column(nullable: true)]
+    #[Assert\Positive]
+    #[Assert\GreaterThanOrEqual(propertyPath: 'lifeMin')]
+    #[Groups(['breed:read', 'breed:write'])]
     private ?int $lifeMax = null;
 
     #[ORM\Column(nullable: true)]
+    #[Assert\Range(min: 1, max: 5)]
+    #[Groups(['breed:read', 'breed:write'])]
     private ?int $energy = null;
 
     #[ORM\Column(nullable: true)]
+    #[Assert\Range(min: 1, max: 5)]
+    #[Groups(['breed:read', 'breed:write'])]
     private ?int $barking = null;
 
     #[ORM\Column(nullable: true)]
+    #[Assert\Range(min: 1, max: 5)]
+    #[Groups(['breed:read', 'breed:write'])]
     private ?int $trainability = null;
 
     #[ORM\Column(length: 36)]
+    #[Assert\NotBlank]
+    #[Assert\Uuid]
+    #[Groups(['breed:read', 'breed:write'])]
     private ?string $dogApiId = null;
 
     #[ORM\ManyToOne(inversedBy: 'breeds')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull]
+    #[Groups(['breed:read', 'breed:write'])]
     private ?BreedGroup $breedGroup = null;
 
     /**
      * @var Collection<int, TemperamentTrait>
      */
     #[ORM\ManyToMany(targetEntity: TemperamentTrait::class, inversedBy: 'breeds')]
+    #[Groups(['breed:read', 'breed:write'])]
     private Collection $traits;
 
     public function __construct()
